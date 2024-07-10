@@ -58,7 +58,7 @@ class FetalDataset(torch_data.Dataset):
         elif mode == 'test_all': # Choose this when being used as a target domain testing set. Liu et al.
             self.pid_curr_load = self.scan_ids
         if extern_norm_fn is None:
-            self.normalize_op = get_normalize_op("CHAOST2")
+            self.normalize_op = get_normalize_op("CHAOST2") # CHAOST2 because is the option for MRI
             print(f'{self.phase}_{self.domains[0]}: Using fold data statistics for normalization')
         else:
             assert len(self.domains) == 1, 'for now we only support one normalization function for the entire set'
