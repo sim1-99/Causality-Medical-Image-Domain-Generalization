@@ -145,6 +145,22 @@ def main(_run, _config, _log):
     tb_writer = SummaryWriter( tbfile_dir  )
 
     opt = AttrDict(_config)
+    
+    if opt.data_name == 'FETAL':
+        import dataloaders.FetalDataset as FETA
+        if not isinstance(opt.tr_domain, list):
+            opt.tr_domain = [opt.tr_domain]
+            opt.te_domain = [opt.te_domain]
+
+        train_set       = FETA.get_training(modality = opt.tr_domain )
+        val_source_set  = FETA.get_validation(modality = opt.tr_domain, norm_func = train_set.normalize_op) # not really using it as there is no validation for target
+        if opt.te_domain[0] == opt.tr_domain[0]:
+            test_set        = FETA.get_test(modality = opt.te_domain, norm_func = train_set.normalize_op) # if same domain, then use the normalize op from the source
+            test_source_set = test_set
+        else:
+            test_set        = FETA.get_test_all(modality = opt.te_domain, norm_func = None)
+            test_source_set        = FETA.get_test(modality = opt.tr_domain, norm_func = train_set.normalize_op)
+        label_name          = FETA.LABEL_NAME
 
     if opt.data_name == 'ABDOMINAL':
         import dataloaders.AbdominalDataset as ABD
