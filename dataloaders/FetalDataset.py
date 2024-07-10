@@ -21,7 +21,7 @@ BASEDIR = '/home/schiarella/nnUNet_data/nnUNet_raw_data'
 print(f'Running on machine {hostname}, using dataset from {BASEDIR}')
 LABEL_NAME = ["BG", "CSF", "GM", "WM", "LV", "CBM", "SGM", "BS"]
 
-class AbdominalDataset(torch_data.Dataset):
+class FetalDataset(torch_data.Dataset):
     def __init__(self,  mode, transforms, base_dir, domains: list,  idx_pct = [0.7, 0.1, 0.2], tile_z_dim = 3, extern_norm_fn = None):
         """
         Args:
@@ -58,7 +58,7 @@ class AbdominalDataset(torch_data.Dataset):
         elif mode == 'test_all': # Choose this when being used as a target domain testing set. Liu et al.
             self.pid_curr_load = self.scan_ids
         if extern_norm_fn is None:
-            self.normalize_op = get_normalize_op(self.domains[0], [ itm['img_fid'] for _, itm in self.sample_list[self.domains[0]].items() ])
+            self.normalize_op = get_normalize_op("CHAOST2")
             print(f'{self.phase}_{self.domains[0]}: Using fold data statistics for normalization')
         else:
             assert len(self.domains) == 1, 'for now we only support one normalization function for the entire set'
