@@ -10,7 +10,7 @@ import SimpleITK as sitk
 from dataloaders.niftiio import read_nii_bysitk
 
 
-def get_normalize_op(modality, fids=None):
+def get_normalize_op(modality, fids):
     """
     As title
     Args:

@@ -1,4 +1,4 @@
-# Dataloader for abdominal images
+# Dataloader for fetal datasets
 import glob
 import numpy as np
 import dataloaders.niftiio as nio
@@ -15,26 +15,18 @@ import itertools
 from .abd_dataset_utils import get_normalize_op
 from pdb import set_trace
 
-hostname = platform.node()
-# folder for datasets
-BASEDIR = '/home/schiarella/nnUNet_data/nnUNet_raw_data'
+BASEDIR = '/home/schiarella/nnUNet_data/nnUNet_raw/Dataset006_Brains'
 print(f'Running on machine {hostname}, using dataset from {BASEDIR}')
+
 LABEL_NAME = ["BG", "CSF", "GM", "WM", "LV", "CBM", "SGM", "BS"]
 
 class FetalDataset(torch_data.Dataset):
-    def __init__(self,  mode, transforms, base_dir, domains: list,  idx_pct = [0.7, 0.1, 0.2], tile_z_dim = 3, extern_norm_fn = None):
-        """
-        Args:
-            mode:               'train', 'val', 'test', 'test_all'
-            transforms:         naive data augmentations used by default. Photometric transformations slightly better than those configured by Zhang et al. (bigaug)
-            idx_pct:            train-val-test split for source domain
-            extern_norm_fn:     feeding data normalization functions from external, only concerns CT-MR cross domain scenario
-        """
+    def __init__(self,  mode, transforms, base_dir, domains: list,  idx_pct = [0.7, 0.1, 0.2],  tile_z_dim = 3, extern_norm_fn = None):
         super(FetalDataset, self).__init__()
         self.transforms=transforms
         self.is_train = True if mode == 'train' else False
         self.phase = mode
-        self.domains = domains
+        self.domains = domains if isinstance(domains, list) else [_dm for _dm in domains]
         self.all_label_names = LABEL_NAME
         self.nclass = len(LABEL_NAME)
         self.tile_z_dim = tile_z_dim
@@ -42,33 +34,19 @@ class FetalDataset(torch_data.Dataset):
         self.idx_pct = idx_pct
 
         self.img_pids = {}
-        for _domain in self.domains: # load file names
-            self.img_pids[_domain] = sorted([ fid.split("_")[-1].split(".nii.gz")[0] for fid in glob.glob(self._base_dir + "/" +  _domain  + "/processed/image_*.nii.gz") ], key = lambda x: int(x))
+        for _domain in self.domains:
+            self.img_pids[_domain] = sorted([ fid.split("_")[-1].split(".nii.gz")[0] for fid in glob.glob(self._base_dir +  _domain  + "/image_*.nii.gz") ], key = lambda x: int(x))
 
-        self.scan_ids = self.__get_scanids(mode, idx_pct) # train val test split in terms of patient ids
-
+        self.scan_ids = self.__get_scanids(mode, idx_pct) # patient ids of the entire fold
+        print(f'Mode {mode}, use scan ids as follows:')
+        print(self.scan_ids)
         self.info_by_scan = None
-        self.sample_list = self.__search_samples(self.scan_ids) # image files names according to self.scan_ids
-        if self.is_train:
-            self.pid_curr_load = self.scan_ids
-        elif mode == 'val':
-            self.pid_curr_load = self.scan_ids
-        elif mode == 'test': # Source domain test
-            self.pid_curr_load = self.scan_ids
-        elif mode == 'test_all': # Choose this when being used as a target domain testing set. Liu et al.
-            self.pid_curr_load = self.scan_ids
-        if extern_norm_fn is None:
-            self.normalize_op = get_normalize_op("CHAOST2") # CHAOST2 because is the option for MRI
-            print(f'{self.phase}_{self.domains[0]}: Using fold data statistics for normalization')
-        else:
-            assert len(self.domains) == 1, 'for now we only support one normalization function for the entire set'
-            self.normalize_op = extern_norm_fn
-
-        print(f'For {self.phase} on {[_dm for _dm in self.domains]} using scan ids {self.pid_curr_load}')
-
-        # load to memory
+        self.sample_list = self.__search_samples(self.scan_ids)
+        self.pid_curr_load = self.scan_ids
+        assert extern_norm_fn is None
+        self.normalize_op = lambda x: (x - x.mean()) * 1.0 / x.std()
         self.actual_dataset = self.__read_dataset()
-        self.size = len(self.actual_dataset) # 2D
+        self.size = len(self.actual_dataset)
 
     def __get_scanids(self, mode, idx_pct):
         """
@@ -109,8 +87,8 @@ class FetalDataset(torch_data.Dataset):
             for curr_id in id_list:
                 curr_dict = {}
 
-                _img_fid = os.path.join(self._base_dir, _domain , 'processed'  ,f'image_{curr_id}.nii.gz')
-                _lb_fid  = os.path.join(self._base_dir, _domain , 'processed', f'label_{curr_id}.nii.gz')
+                _img_fid = os.path.join(self._base_dir, _domain ,f'image_{curr_id}.nii.gz')
+                _lb_fid  = os.path.join(self._base_dir, _domain ,f'label_{curr_id}.nii.gz')
 
                 curr_dict["img_fid"] = _img_fid
                 curr_dict["lbs_fid"] = _lb_fid
@@ -118,10 +96,10 @@ class FetalDataset(torch_data.Dataset):
 
         return out_list
 
-
     def __read_dataset(self):
         """
-        Read the dataset into memory
+        Build index pointers to individual slices
+        Also keep a look-up table from scan_id, slice to index
         """
 
         out_list = []
@@ -146,15 +124,15 @@ class FetalDataset(torch_data.Dataset):
                 lb      = np.transpose(lb, (1,2,0))
 
                 assert img.shape[-1] == lb.shape[-1]
+                nframe = img.shape[-1],
 
-                # now start writing everthing in
-                # write the beginning frame
+
                 out_list.append( {"img": img[..., 0: 1],
                                "lb":lb[..., 0: 0 + 1],
                                "is_start": True,
                                "is_end": False,
                                "domain": _domain,
-                               "nframe": img.shape[-1],
+                               "nframe": nframe,
                                "scan_id": _domain + "_" + scan_id,
                                "z_id":0})
                 glb_idx += 1
@@ -164,7 +142,7 @@ class FetalDataset(torch_data.Dataset):
                                "lb":lb[..., ii: ii + 1],
                                "is_start": False,
                                "is_end": False,
-                               "nframe": -1,
+                               "nframe": nframe,
                                "domain": _domain,
                                "scan_id":_domain + "_" + scan_id,
                                "z_id": ii
@@ -176,7 +154,7 @@ class FetalDataset(torch_data.Dataset):
                                "lb":lb[..., ii: ii+ 1],
                                "is_start": False,
                                "is_end": True,
-                               "nframe": -1,
+                               "nframe": nframe,
                                "domain": _domain,
                                "scan_id":_domain + "_" + scan_id,
                                "z_id": ii
@@ -208,7 +186,6 @@ class FetalDataset(torch_data.Dataset):
 
         if self.tile_z_dim > 1:
             img = img.repeat( [ self.tile_z_dim, 1, 1] )
-            assert img.ndimension() == 3
 
         is_start    = curr_dict["is_start"]
         is_end      = curr_dict["is_end"]
@@ -235,38 +212,49 @@ class FetalDataset(torch_data.Dataset):
 tr_func  = trans.transform_with_label(trans.tr_aug)
 
 def get_training(modality, idx_pct = [0.7, 0.1, 0.2], tile_z_dim = 3):
-    return AbdominalDataset(idx_pct = idx_pct,\
+    return FetalDataset(idx_pct = idx_pct,\
         mode = 'train',\
         domains = modality,\
         transforms = tr_func,\
         base_dir = BASEDIR,\
-        extern_norm_fn = None, # normalization function is decided by domain
+        extern_norm_fn = None,
         tile_z_dim = tile_z_dim)
 
-def get_validation(modality, norm_func, idx_pct = [0.7, 0.1, 0.2], tile_z_dim = 3):
-     return AbdominalDataset(idx_pct = idx_pct,\
+def get_validation(modality, idx_pct = [0.7, 0.1, 0.2], tile_z_dim = 3):
+     return FetalDataset(idx_pct = idx_pct,\
         mode = 'val',\
         transforms = None,\
         domains = modality,\
         base_dir = BASEDIR,\
-        extern_norm_fn = norm_func,\
+        extern_norm_fn = None,\
         tile_z_dim = tile_z_dim)
 
-def get_test(modality, norm_func, tile_z_dim = 3, idx_pct = [0.7, 0.1, 0.2]):
-     return AbdominalDataset(idx_pct = idx_pct,\
+def get_test(modality, tile_z_dim = 3, idx_pct = [0.7, 0.1, 0.2]):
+     return FetalDataset(idx_pct = idx_pct,\
         mode = 'test',\
         transforms = None,\
         domains = modality,\
-        extern_norm_fn = norm_func,\
+        extern_norm_fn = None,\
         base_dir = BASEDIR,\
         tile_z_dim = tile_z_dim)
 
 def get_test_all(modality, norm_func, tile_z_dim = 3, idx_pct = [0.7, 0.1, 0.2]):
-     return AbdominalDataset(idx_pct = idx_pct,\
+     return FetalDataset(idx_pct = idx_pct,\
         mode = 'test_all',\
         transforms = None,\
         domains = modality,\
         extern_norm_fn = norm_func,\
         base_dir = BASEDIR,\
         tile_z_dim = tile_z_dim)
+
+def get_test_exclu(tr_modality, tile_z_dim = 3, idx_pct = [0.7, 0.1, 0.2]):
+    modality = [ md for md in ['A', 'B', 'C', 'D', 'E', 'F'] if md != tr_modality ]
+    return FetalDataset(idx_pct = idx_pct,\
+        mode = 'test_all',\
+        domains = modality,\
+        transforms = None,\
+        base_dir = BASEDIR,\
+        extern_norm_fn = None,
+        tile_z_dim = tile_z_dim)
+
 
