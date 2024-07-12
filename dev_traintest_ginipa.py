@@ -157,7 +157,7 @@ def main(_run, _config, _log):
         test_source_set     = FETA.get_test(modality = opt.tr_domain)
         label_name      = FETA.LABEL_NAME
 
-    if opt.data_name == 'ABDOMINAL':
+    elif opt.data_name == 'ABDOMINAL':
         import dataloaders.AbdominalDataset as ABD
         if not isinstance(opt.tr_domain, list):
             opt.tr_domain = [opt.tr_domain]
