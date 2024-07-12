@@ -146,8 +146,8 @@ def main(_run, _config, _log):
 
     opt = AttrDict(_config)
     
-    elif opt.data_name == 'FETAL':
-        import dataloaders.ProstateDataset as FETA
+    if opt.data_name == 'FETAL':
+        import dataloaders.FetalDataset as FETA
         train_set       = FETA.get_training(modality = opt.tr_domain )
         val_source_set  = FETA.get_validation(modality = opt.tr_domain)
         if opt.exclu_domain is not None:

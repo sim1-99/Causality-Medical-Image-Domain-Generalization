@@ -1,9 +1,9 @@
 # GIN and IPA for abdominal images
-SCRIPT=dev_traintest_ginipa.py
+SCRIPT=../dev_traintest_ginipa.py
 GPUID1=0
 NUM_WORKER=8
 MODEL='efficient_b2_unet'
-CPT='abdominal_gin_ipa_example'
+CPT='feta_gin_ipa'
 
 # visualizations
 PRINT_FREQ=50000
