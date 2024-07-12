@@ -15,6 +15,7 @@ import itertools
 from .abd_dataset_utils import get_normalize_op
 from pdb import set_trace
 
+hostname = platform.node()
 BASEDIR = '/home/schiarella/nnUNet_data/nnUNet_raw/Dataset006_Brains'
 print(f'Running on machine {hostname}, using dataset from {BASEDIR}')
 
