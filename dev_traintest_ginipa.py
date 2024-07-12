@@ -134,7 +134,7 @@ def main(_run, _config, _log):
         for source_file, _ in _run.experiment_info['sources']:
             os.makedirs(os.path.dirname(f'{_run.observers[0].dir}/source/{source_file}'),
                         exist_ok=True)
-            _run.observers[0].save_file(source_file, f'source/{source_file}')
+            _run.observers[0].save_file("../"+source_file, f'source/{source_file}')
         shutil.rmtree(f'{_run.observers[0].basedir}/_sources')
 
         _config['run_dir'] = _run.observers[0].dir

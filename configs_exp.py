@@ -16,7 +16,7 @@ sacred.SETTINGS.CAPTURE_MODE = 'no'
 ex = Experiment('CAUSALDG')
 ex.captured_out_filter = apply_backspaces_and_linefeeds
 
-source_folders = ['.', './dataloaders', './models', './my_utils']
+source_folders = ['..', '../dataloaders', '../models', '../my_utils']
 sources_to_save = list(itertools.chain.from_iterable(
     [glob.glob(f'{folder}/*.py') for folder in source_folders]))
 
