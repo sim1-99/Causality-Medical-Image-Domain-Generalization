@@ -51,12 +51,12 @@ def cfg():
 
     ###### training configs ######
     data_name = 'FETAL' # change to ABDOMINAL or PROSTATE
-    tr_domain = 'B' # for prostate, use A B C D E or F
+    tr_domain = 'A' # for prostate, use A B C D E or F
     te_domain = 'NA'
     exclu_domain = None # only for prostate for 1vs5 experiments, will override te_domain
     model = 'efficient_b2_unet'
     eval_fold = 0 # not in use
-    nclass = 4
+    nclass = 8
 
     continue_train = False
     epoch_count = 1
@@ -89,7 +89,7 @@ def cfg():
     gin_norm = 'frob'
 
     # config for ipa correlation maps
-    blend_grid_size = 24 # 24*2=48, 1/4 of image size
+    blend_grid_size = 64 # 24*2=48, 1/4 of image size
     blend_epsilon = 0.3
 
     # consistency
