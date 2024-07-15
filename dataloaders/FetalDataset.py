@@ -16,7 +16,7 @@ from .abd_dataset_utils import get_normalize_op
 from pdb import set_trace
 
 hostname = platform.node()
-BASEDIR = '/home/schiarella/nnUNet_data/nnUNet_raw/Dataset006_Brains'
+BASEDIR = '/home/schiarella/nnUNet_data/FeTA_24_FT/'
 print(f'Running on machine {hostname}, using dataset from {BASEDIR}')
 
 LABEL_NAME = ["BG", "CSF", "GM", "WM", "LV", "CBM", "SGM", "BS"]
@@ -36,7 +36,7 @@ class FetalDataset(torch_data.Dataset):
 
         self.img_pids = {}
         for _domain in self.domains:
-            self.img_pids[_domain] = sorted([ fid.split("_")[-1].split(".nii.gz")[0] for fid in glob.glob(self._base_dir +  _domain  + "/image_*.nii.gz") ], key = lambda x: int(x))
+            self.img_pids[_domain] = sorted([ fid.split("_")[-1].split(".nii.gz")[0] for fid in glob.glob(self._base_dir +  _domain  + "/*_T2w.nii.gz") ], key = lambda x: int(x))
 
         self.scan_ids = self.__get_scanids(mode, idx_pct) # patient ids of the entire fold
         print(f'Mode {mode}, use scan ids as follows:')
@@ -88,8 +88,8 @@ class FetalDataset(torch_data.Dataset):
             for curr_id in id_list:
                 curr_dict = {}
 
-                _img_fid = os.path.join(self._base_dir, _domain ,f'image_{curr_id}.nii.gz')
-                _lb_fid  = os.path.join(self._base_dir, _domain ,f'label_{curr_id}.nii.gz')
+                _img_fid = os.path.join(self._base_dir, _domain ,f'{curr_id}_T2w.nii.gz')
+                _lb_fid  = os.path.join(self._base_dir, _domain ,f'{curr_id}_label.nii.gz')
 
                 curr_dict["img_fid"] = _img_fid
                 curr_dict["lbs_fid"] = _lb_fid
