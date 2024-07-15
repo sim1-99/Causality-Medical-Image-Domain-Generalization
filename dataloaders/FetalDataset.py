@@ -249,7 +249,7 @@ def get_test_all(modality, norm_func, tile_z_dim = 3, idx_pct = [0.7, 0.1, 0.2])
         tile_z_dim = tile_z_dim)
 
 def get_test_exclu(tr_modality, tile_z_dim = 3, idx_pct = [0.7, 0.1, 0.2]):
-    modality = [ md for md in ['A', 'B', 'C', 'D', 'E', 'F'] if md != tr_modality ]
+    modality = [ md for md in ['A'] if md != tr_modality ]  # 'A', 'B', 'C', 'D', 'E', 'F'
     return FetalDataset(idx_pct = idx_pct,\
         mode = 'test_all',\
         domains = modality,\
