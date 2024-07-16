@@ -16,7 +16,7 @@ from .abd_dataset_utils import get_normalize_op
 from pdb import set_trace
 
 hostname = platform.node()
-BASEDIR = '/home/schiarella/nnUNet_data/FeTA_24_GIN-IPA/'
+BASEDIR = '/home/schiarella/Causality-Medical-Image-Domain-Generalization/FeTA_24_GIN-IPA/'
 print(f'Running on machine {hostname}, using dataset from {BASEDIR}')
 
 LABEL_NAME = ["BG", "CSF", "GM", "WM", "LV", "CBM", "SGM", "BS"]
