@@ -51,7 +51,7 @@ def cfg():
 
     ###### training configs ######
     data_name = 'FETAL' # change to ABDOMINAL or PROSTATE
-    tr_domain = 'A B' # for prostate, use A B C D E or F
+    tr_domain = 'A B C' # for prostate, use A B C D E or F
     te_domain = ''
     exclu_domain = None # only for prostate for 1vs5 experiments, will override te_domain
     model = 'efficient_b2_unet'
