@@ -11,7 +11,7 @@ import pickle as pkl
 from models import create_forward
 from my_utils.util import AttrDict, worker_init_fn
 
-from torch.utils.data import DataLoader, RandomSampler
+from torch.utils.data import DataLoader
 from pdb import set_trace
 from tqdm import tqdm
 from configs_exp import ex # configuration files
@@ -189,21 +189,16 @@ def main(_run, _config, _log):
 
     print(f'Using TR domain {opt.tr_domain}; TE domain {opt.te_domain}')
 
-    #train_sampler = RandomSampler(data_source = train_set, replacement=True, num_samples = 1)
-    #val_sampler = RandomSampler(data_source = val_source_set, replacement=True, num_samples = 3)
-
     train_loader = DataLoader(
         dataset = train_set, num_workers = opt.nThreads, 
         batch_size = opt.batchSize, shuffle = True, drop_last = True,
-        worker_init_fn = worker_init_fn, pin_memory = True,
-        #sampler=train_sampler
+        worker_init_fn = worker_init_fn, pin_memory = True
     )
 
     val_loader = iter(
         DataLoader(
             dataset = val_source_set, num_workers = 1, batch_size = 1,
-            shuffle = True, drop_last = True, pin_memory = True,
-        #    sampler=val_sampler
+            shuffle = True, drop_last = True, pin_memory = True
         )
     )
 
