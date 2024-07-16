@@ -31,13 +31,13 @@ IMG_SIZE=256 # 192
 OPTM_TYPE='adam'
 LR=0.0003
 ADAM_L2=0.00003
-TE_DOMAIN="NA" # will be override by exclu_domain
+TE_DOMAIN="" # will be override by exclu_domain
 
 # blender config
 BLEND_GRID_SIZE=64 # 24 * 2 = 48, 1/4 of 192
 
 # validation fold
-ALL_TRS=("A") # repeat the experiment for different source domains. For the full set of experiments, use A B C D E F
+ALL_TRS=("A B") # repeat the experiment for different source domains. For the full set of experiments, use A B C D E F
 NCLASS=8
 
 # KL term
