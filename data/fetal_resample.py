@@ -121,7 +121,7 @@ OUT_FOLDER = "./processed/"
 HIST_CUT_TOP = 0.5
 
 for DM in DOMAINS:
-    scan_dir = os.path.join(OUT_FOLDER, DM)
+    scan_dir = OUT_FOLDER
     os.makedirs(scan_dir, exist_ok = True)
 
     if DM == "B":
