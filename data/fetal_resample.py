@@ -7,7 +7,7 @@ import copy
 sys.path.insert(0, "./dataloaders/")
 import niftiio as nio
 
-DOMAINS = ["B", "C"]
+DOMAINS = ["A", "B", "C"]
 
 # helper functions copy pasted
 def resample_by_res(mov_img_obj, new_spacing, interpolator = sitk.sitkLinear, logging = True):
@@ -122,9 +122,7 @@ HIST_CUT_TOP = 0.5
 
 for DM in DOMAINS:
     scan_dir = os.path.join(OUT_FOLDER, DM)
-    temp_dir = os.path.join("./temp/", DM)
     os.makedirs(scan_dir, exist_ok = True)
-    os.makedirs(temp_dir, exist_ok = True)
 
     if DM == "B":
         SPA_FAC_1 = (135) * 1.0 / 256 # spacing factor
@@ -151,9 +149,9 @@ for DM in DOMAINS:
         img_obj = sitk.ReadImage( img_fid )
         seg_obj = sitk.ReadImage( seg_fid )
 
+
         ## image
         array = sitk.GetArrayFromImage(img_obj)
-
 
         # histogram cut
         hir = float(np.percentile(array, 100.0 - HIST_CUT_TOP))
@@ -162,11 +160,12 @@ for DM in DOMAINS:
         cropped_img_o = sitk.GetImageFromArray(array)
         cropped_img_o = copy_spacing_ori(img_obj, cropped_img_o)
 
-
         # resampling
         img_spa_ori = img_obj.GetSpacing()
 
-        if DM == "B":
+        if DM == "A":
+            res_img_o = cropped_img_o
+        elif DM == "B":
             res_img_o = resample_by_res(
                 cropped_img_o,
                 [
@@ -200,7 +199,9 @@ for DM in DOMAINS:
         # resampling
         lb_spa_ori = seg_obj.GetSpacing()
 
-        if DM == "B":
+        if DM == "A":
+            res_lb_o = cropped_lb_o
+        elif DM == "B":
             res_lb_o = resample_lb_by_res(
             cropped_lb_o, 
             [
