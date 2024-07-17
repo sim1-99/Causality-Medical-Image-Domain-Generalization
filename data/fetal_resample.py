@@ -7,7 +7,6 @@ import copy
 sys.path.insert(0, "./dataloaders/")
 import niftiio as nio
 
-DOMAINS = ["A", "B", "C"]
 
 # helper functions copy pasted
 def resample_by_res(mov_img_obj, new_spacing, interpolator = sitk.sitkLinear, logging = True):
@@ -117,121 +116,95 @@ def copy_spacing_ori(src, dst):
     return dst
 
 
-OUT_FOLDER = "./processed/"
+OUT_FOLDER = "./processed/A/"
 HIST_CUT_TOP = 0.5
 
-for DM in DOMAINS:
-    scan_dir = OUT_FOLDER
-    os.makedirs(scan_dir, exist_ok = True)
 
-    if DM == "B":
-        SPA_FAC_1 = (135) * 1.0 / 256 # spacing factor
-        SPA_FAC_2 = (189) * 1.0 / 256
-        SPA_FAC_3 = (155) * 1.0 / 256
-    elif DM == "C":
-        SPA_FAC_1 = (170) * 1.0 / 256
-        SPA_FAC_2 = (209) * 1.0 / 256
+scan_dir = OUT_FOLDER
+os.makedirs(scan_dir, exist_ok = True)
 
+desired_shape = [256, 256, 256]
 
-    IMG_FOLDER = f'./FeTA_24_GIN-IPA/{DM}/'
-    SEG_FOLDER = IMG_FOLDER
-    imgs = glob.glob(IMG_FOLDER + "/image_*.nii.gz")
-    imgs = [ fid for fid in sorted(imgs) ]
-    segs = [ fid for fid in sorted(glob.glob(SEG_FOLDER + "/label_*.nii.gz")) ]
+IMG_FOLDER = f'./FeTA_24_GIN-IPA/'
+SEG_FOLDER = IMG_FOLDER
+imgs = glob.glob(IMG_FOLDER + "/image_*.nii.gz")
+imgs = [ fid for fid in sorted(imgs) ]
+segs = [ fid for fid in sorted(glob.glob(SEG_FOLDER + "/label_*.nii.gz")) ]
 
-    pids = [pid.split("_")[-1].split(".")[0] for pid in imgs]
+pids = [pid.split("_")[-1].split(".")[0] for pid in imgs]
 
 
-    for img_fid, seg_fid, pid in zip(imgs, segs, pids):
+for img_fid, seg_fid, pid in zip(imgs, segs, pids):
 
-        lb_n = nio.read_nii_bysitk(seg_fid)
+    lb_n = nio.read_nii_bysitk(seg_fid)
 
-        img_obj = sitk.ReadImage( img_fid )
-        seg_obj = sitk.ReadImage( seg_fid )
-
-
-        ## image
-        array = sitk.GetArrayFromImage(img_obj)
-
-        # histogram cut
-        hir = float(np.percentile(array, 100.0 - HIST_CUT_TOP))
-        array[array > hir] = hir
-
-        cropped_img_o = sitk.GetImageFromArray(array)
-        cropped_img_o = copy_spacing_ori(img_obj, cropped_img_o)
-
-        # resampling
-        img_spa_ori = img_obj.GetSpacing()
-
-        if DM == "A":
-            res_img_o = cropped_img_o
-        elif DM == "B":
-            res_img_o = resample_by_res(
-                cropped_img_o,
-                [
-                    img_spa_ori[0] * SPA_FAC_1,
-                    img_spa_ori[1] * SPA_FAC_2,
-                    img_spa_ori[-1] * SPA_FAC_3
-                ],
-                interpolator = sitk.sitkLinear,
-                logging = True
-            )
-        elif DM == "C":
-            res_img_o = resample_by_res(
-                cropped_img_o,
-                [
-                    img_spa_ori[0] * SPA_FAC_1,
-                    img_spa_ori[1] * SPA_FAC_2,
-                    img_spa_ori[-1] * SPA_FAC_1
-                ],
-                interpolator = sitk.sitkLinear,
-                logging = True
-            )
+    img_obj = sitk.ReadImage( img_fid )
+    seg_obj = sitk.ReadImage( seg_fid )
 
 
-        ## label
-        lb_arr = sitk.GetArrayFromImage(seg_obj)
+    ## image
+    array = sitk.GetArrayFromImage(img_obj)
+    current_shape = array.shape
 
-        cropped_lb_o = sitk.GetImageFromArray(lb_arr)
-        cropped_lb_o = copy_spacing_ori(seg_obj, cropped_lb_o)
+    # histogram cut
+    hir = float(np.percentile(array, 100.0 - HIST_CUT_TOP))
+    array[array > hir] = hir
 
+    cropped_img_o = sitk.GetImageFromArray(array)
+    cropped_img_o = copy_spacing_ori(img_obj, cropped_img_o)
 
-        # resampling
-        lb_spa_ori = seg_obj.GetSpacing()
-
-        if DM == "A":
-            res_lb_o = cropped_lb_o
-        elif DM == "B":
-            res_lb_o = resample_lb_by_res(
-            cropped_lb_o, 
+    # resampling
+    img_spa_ori = img_obj.GetSpacing()
+    
+    shapes_are_identical = all(
+        [a == b for a, b in zip(current_shape, desired_shape)]
+    )
+    
+    if shapes_are_identical is False:
+        res_img_o = resample_by_res(
+            cropped_img_o,
             [
-                lb_spa_ori[0] * SPA_FAC_1,
-                lb_spa_ori[1] * SPA_FAC_2,
-                lb_spa_ori[-1] * SPA_FAC_3
+                img_spa_ori[0] * current_shape[-1] * 1.0 / desired_shape[0],
+                img_spa_ori[1] * current_shape[1] * 1.0 / desired_shape[1],
+                img_spa_ori[-1] * current_shape[0] * 1.0 / desired_shape[-1]
             ],
             interpolator = sitk.sitkLinear,
-            ref_img = res_img_o,
             logging = True
         )
-        elif DM == "C":
-            res_lb_o = resample_lb_by_res(
-            cropped_lb_o, 
-            [
-                img_spa_ori[0] * SPA_FAC_1,
-                img_spa_ori[1] * SPA_FAC_2,
-                img_spa_ori[-1] * SPA_FAC_1
-            ],
-            interpolator = sitk.sitkLinear,
-            ref_img = res_img_o,
-            logging = True
-            )
+    elif shapes_are_identical is True:
+        res_img_o = cropped_img_o
 
 
-        out_img_fid = os.path.join( scan_dir, f'image_{pid}.nii.gz' )
-        out_lb_fid  = os.path.join( scan_dir, f'label_{pid}.nii.gz' )
+    ## label
+    lb_arr = sitk.GetArrayFromImage(seg_obj)
 
-        # then save
-        sitk.WriteImage(res_img_o, out_img_fid, True)
-        sitk.WriteImage(res_lb_o, out_lb_fid, True)
-        print("{} has been saved".format(out_img_fid))
-        print("{} has been saved".format(out_lb_fid))
+    cropped_lb_o = sitk.GetImageFromArray(lb_arr)
+    cropped_lb_o = copy_spacing_ori(seg_obj, cropped_lb_o)
+
+
+    # resampling
+    lb_spa_ori = seg_obj.GetSpacing()
+
+    if shapes_are_identical is False:
+        res_lb_o = resample_lb_by_res(
+        cropped_lb_o, 
+        [
+            lb_spa_ori[0] * current_shape[-1] * 1.0 / desired_shape[0],
+            lb_spa_ori[1] * current_shape[1] * 1.0 / desired_shape[1],
+            lb_spa_ori[-1] * current_shape[0] * 1.0 / desired_shape[-1]
+        ],
+        interpolator = sitk.sitkLinear,
+        ref_img = res_img_o,
+        logging = True
+    )
+    elif shapes_are_identical is True:
+        res_lb_o = cropped_lb_o
+
+    out_img_fid = os.path.join( scan_dir, f'image_{pid}.nii.gz' )
+    out_lb_fid  = os.path.join( scan_dir, f'label_{pid}.nii.gz' )
+
+    # then save
+    sitk.WriteImage(res_img_o, out_img_fid, True)
+    sitk.WriteImage(res_lb_o, out_lb_fid, True)
+    print("{} has been saved".format(out_img_fid))
+    print("{} has been saved".format(out_lb_fid))
