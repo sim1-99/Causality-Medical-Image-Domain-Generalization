@@ -197,20 +197,20 @@ class ExperimentNet(BaseModel):
         itk_mask.SetSpacing(  train_set.info_by_scan[index]["spacing"] )
         itk_mask.SetOrigin(   train_set.info_by_scan[index]["origin"] )
         itk_mask.SetDirection(train_set.info_by_scan[index]["direction"] )
-        sitk.WriteImage(itk_mask, f"/home/schiarella/Causality-Medical-Image-Domain-Generalization/output_{self.opt.exp_type}/{self.opt.tr_domain}/mask_{i}.nii", True)
+        sitk.WriteImage(itk_mask, f"/home/schiarella/Causality-Medical-Image-Domain-Generalization/output_{self.opt.exp_type}/{self.opt.tr_domain}/label_{i}.nii.gz", True)
 
         input_buffer = input_buffer[0, 0, ...]
         itk_buffer = sitk.GetImageFromArray(input_buffer.cpu().numpy())
         itk_buffer.SetSpacing(  train_set.info_by_scan[index]["spacing"] )
         itk_buffer.SetOrigin(   train_set.info_by_scan[index]["origin"] )
         itk_buffer.SetDirection(train_set.info_by_scan[index]["direction"] )
-        sitk.WriteImage(itk_buffer, f"/home/schiarella/Causality-Medical-Image-Domain-Generalization/output_{self.opt.exp_type}/{self.opt.tr_domain}/buffer_{i}.nii", True)
+        sitk.WriteImage(itk_buffer, f"/home/schiarella/Causality-Medical-Image-Domain-Generalization/output_{self.opt.exp_type}/{self.opt.tr_domain}/image_{i}.nii.gz", True)
 
-        if 'ipa' in self.opt.exp_type:
+        """if 'ipa' in self.opt.exp_type:
             blend_mask = blend_mask[0, 0, ...]
             itk_blend = sitk.GetImageFromArray(blend_mask.cpu().numpy())
-            sitk.WriteImage(itk_blend, f"/home/schiarella/Causality-Medical-Image-Domain-Generalization/output_{self.opt.exp_type}/{self.opt.tr_domain}/blend_{i}.nii", True)
-
+            sitk.WriteImage(itk_blend, f"/home/schiarella/Causality-Medical-Image-Domain-Generalization/output_{self.opt.exp_type}/{self.opt.tr_domain}/blend_{i}.nii.gz", True)
+        """
 
     # run validation
     def validate(self):
