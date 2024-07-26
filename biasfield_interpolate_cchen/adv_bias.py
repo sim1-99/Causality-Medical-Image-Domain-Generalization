@@ -42,7 +42,7 @@ class AdvBias(AdvTransformBase):
                  'xi':1e-6,
                  'control_point_spacing':[32,32],
                  'downscale':2,
-                 'data_size':[2,1,128,128],
+                 'data_size':[1,1,256,256,256],
                  'interpolation_order':3,
                  'init_mode':'gaussian',
                  'space':'log'},

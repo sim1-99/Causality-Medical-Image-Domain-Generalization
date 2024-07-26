@@ -73,7 +73,7 @@ class AdvTransformBase(torch.nn.Module):
         self.is_training =False
 
     def rescale_parameters(self):
-        self.param = self.xi*unit_normalize(self.param)
+        self.param = self.xi*self.unit_normalize(self.param)
         return self.param
 
     def optimize_parameters(self,set=False):

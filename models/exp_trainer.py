@@ -9,9 +9,10 @@ import my_utils.util as util
 from .base_model import *
 from pdb import set_trace
 import numpy as np
+import SimpleITK as sitk
 from .smpmodels import*
 
-from .imagefilter import GINGroupConv # gin
+from .imagefilter3d import GINGroupConv3D
 import models.segloss as segloss
 import sys
 
@@ -37,7 +38,7 @@ class ExperimentNet(BaseModel):
 
         # data augmentation nodes
         if opt.exp_type == 'gin':
-            self.img_transform_node = GINGroupConv(out_channel = opt.gin_out_nc, n_layer = opt.gin_nlayer, interm_channel = opt.gin_n_interm_ch, out_norm = opt.gin_norm).cuda()
+            self.img_transform_node = GINGroupConv3D(out_channel = opt.gin_out_nc, n_layer = opt.gin_nlayer, interm_channel = opt.gin_n_interm_ch, out_norm = opt.gin_norm).cuda()
         elif opt.exp_type == 'ginipa':
             # ipa
             blender_cofig = {
@@ -45,13 +46,13 @@ class ExperimentNet(BaseModel):
                     'xi': 1e-6,
                     'control_point_spacing':[opt.blend_grid_size, opt.blend_grid_size],
                     'downscale':2, #
-                    'data_size':[opt.batchSize,1,opt.fineSize, opt.fineSize],
+                    'data_size':[opt.batchSize, 1, opt.fineSize, opt.fineSize, opt.fineSize],
                     'interpolation_order':2,
                     'init_mode':'gaussian',
                     'space':'log'
                     }
 
-            self.img_transform_node = GINGroupConv(out_channel = opt.gin_out_nc, n_layer = opt.gin_nlayer, interm_channel = opt.gin_n_interm_ch, out_norm = opt.gin_norm).cuda()
+            self.img_transform_node = GINGroupConv3D(out_channel = opt.gin_out_nc, n_layer = opt.gin_nlayer, interm_channel = opt.gin_n_interm_ch, out_norm = opt.gin_norm).cuda()
             self.blender_node       = AdvBias(blender_cofig) # IPA
             self.blender_node.init_parameters()
 
@@ -156,14 +157,11 @@ class ExperimentNet(BaseModel):
         self.input_mask = input_mask
 
 
-    def set_input_aug_sup(self, input):
+    def set_input_aug_sup(self, input_img, input_mask, i, train_set):
         '''
         Applying both GIN and IPA
 
         '''
-        input_img   = input['img']
-        input_mask  = input['lb']
-
         if len(self.gpu_ids) > 0:
             input_img = input_img.float().cuda(self.gpu_ids[0])
             input_mask = input_mask.float().cuda(self.gpu_ids[0])
@@ -177,7 +175,7 @@ class ExperimentNet(BaseModel):
         if 'ipa' in self.opt.exp_type:
 
             self.blender_node.init_parameters()
-            blend_mask = rescale_intensity(self.blender_node.bias_field).repeat(1,3,1,1)
+            blend_mask = rescale_intensity(self.blender_node.bias_field).repeat(1,3,1,1,1)
 
             # spatially-variable blending
             input_cp1 = input_buffer[: self._nb_current].clone().detach() * blend_mask + input_buffer[self._nb_current: self._nb_current * 2].clone().detach() * (1.0 - blend_mask)
@@ -190,6 +188,29 @@ class ExperimentNet(BaseModel):
 
         self.input_img_3copy = input_buffer
         self.input_mask = input_mask
+
+        i = str(i)
+        index = self.opt.tr_domain + '_' + i
+
+        input_mask = input_mask[0, 0, ...]
+        itk_mask = sitk.GetImageFromArray(input_mask.cpu().numpy())
+        itk_mask.SetSpacing(  train_set.info_by_scan[index]["spacing"] )
+        itk_mask.SetOrigin(   train_set.info_by_scan[index]["origin"] )
+        itk_mask.SetDirection(train_set.info_by_scan[index]["direction"] )
+        sitk.WriteImage(itk_mask, f"/home/schiarella/Causality-Medical-Image-Domain-Generalization/output_{self.opt.exp_type}/{self.opt.tr_domain}/mask_{i}.nii", True)
+
+        input_buffer = input_buffer[0, 0, ...]
+        itk_buffer = sitk.GetImageFromArray(input_buffer.cpu().numpy())
+        itk_buffer.SetSpacing(  train_set.info_by_scan[index]["spacing"] )
+        itk_buffer.SetOrigin(   train_set.info_by_scan[index]["origin"] )
+        itk_buffer.SetDirection(train_set.info_by_scan[index]["direction"] )
+        sitk.WriteImage(itk_buffer, f"/home/schiarella/Causality-Medical-Image-Domain-Generalization/output_{self.opt.exp_type}/{self.opt.tr_domain}/buffer_{i}.nii", True)
+
+        if 'ipa' in self.opt.exp_type:
+            blend_mask = blend_mask[0, 0, ...]
+            itk_blend = sitk.GetImageFromArray(blend_mask.cpu().numpy())
+            sitk.WriteImage(itk_blend, f"/home/schiarella/Causality-Medical-Image-Domain-Generalization/output_{self.opt.exp_type}/{self.opt.tr_domain}/blend_{i}.nii", True)
+
 
     # run validation
     def validate(self):

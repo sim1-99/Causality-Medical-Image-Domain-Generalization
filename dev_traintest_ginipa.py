@@ -194,7 +194,7 @@ def main(_run, _config, _log):
         batch_size = opt.batchSize, shuffle = True, drop_last = True,
         worker_init_fn = worker_init_fn, pin_memory = True
     )
-
+    """
     val_loader = iter(
         DataLoader(
             dataset = val_source_set, num_workers = 1, batch_size = 1,
@@ -210,7 +210,7 @@ def main(_run, _config, _log):
     test_src_loader = DataLoader(
         dataset = test_source_set, num_workers = 1, batch_size = 1,
         shuffle = False, pin_memory = True
-    )
+    )"""
 
     if opt.exp_type == 'gin' or opt.exp_type == 'ginipa':
         model = create_forward(opt)
@@ -240,13 +240,37 @@ def main(_run, _config, _log):
                 # avoid batchsize issues caused by fetching last training batch
                 if train_batch["img"].shape[0] != opt.batchSize:
                     continue
-
+                """
                 train_input = {'img': train_batch["img"],
-                               'lb': train_batch["lb"]}
+                               'lb': train_batch["lb"]}"""
+
+                folder = f"/home/schiarella/Causality-Medical-Image-Domain-Generalization/processed/{opt.tr_domain}"
+
+                image_file = os.path.join(folder, f'image_{i}.nii.gz') # sorted(glob.glob(
+                label_file = os.path.join(folder, f'label_{i}.nii.gz')
+
+                img, _info = nio.read_nii_bysitk(image_file, peel_info=True)
+                lb = nio.read_nii_bysitk(label_file)
+
+                img = np.float32(img)
+                lb = np.float32(lb)
+
+                img = np.transpose(img, (1, 2, 0))
+                lb = np.transpose(lb, (1, 2, 0))
+
+                img = torch.from_numpy(img).cuda()
+                img = img.unsqueeze(0).unsqueeze(0)
+                lb = torch.from_numpy(lb).cuda()
+                lb = lb.unsqueeze(0).unsqueeze(0)
+
+                img = torch.cat((img, img, img), dim = 1)
+                lb = torch.cat((lb, lb, lb), dim = 1)
+
+                print('shape:', img.shape)
 
                 ## run a training step
-                model.set_input_aug_sup(train_input)
-                model.optimize_parameters()
+                model.set_input_aug_sup(img, lb, i, train_set)
+                #model.optimize_parameters()
 
                 ## display training losses
                 if total_steps % opt.display_freq == 0:
@@ -258,6 +282,7 @@ def main(_run, _config, _log):
                     t = (time.time() - iter_start_time) / opt.batchSize
                     model.track_scalar_in_tb(tb_writer, tr_error, total_steps)
 
+                """
                 ## run and display validation losses
                 if total_steps % opt.validation_freq == 0:
                     with torch.no_grad():
@@ -322,7 +347,7 @@ def main(_run, _config, _log):
                 print("End of model inference, which takes {} seconds".format(t1 - t0))
 
         if opt.phase == 'test':
-            return
+            return"""
 
         if epoch % opt.save_epoch_freq == 0:
             print('saving the model at the end of epoch %d, iters %d' %

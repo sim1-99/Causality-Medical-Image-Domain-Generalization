@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH -J gin_ipa_prova
-#SBATCH -p high
+#SBATCH -p short
 #SBATCH --gres=gpu:1
-#SBATCH --mem=20G
-#SBATCH -c 32
+#SBATCH --mem=30G
+#SBATCH -c 4
 #SBATCH --chdir=/home/schiarella
 #SBATCH -o /home/schiarella/Causality-Medical-Image-Domain-Generalization/outs/%x-%j.out 
 #SBATCH -e /home/schiarella/Causality-Medical-Image-Domain-Generalization/outs/%x-%j.err  

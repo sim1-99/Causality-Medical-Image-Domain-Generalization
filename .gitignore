@@ -166,3 +166,6 @@ cython_debug/
 checkpoints/
 FeTA_24_GIN-IPA/
 processed/
+output_gin/
+output_ginipa/
+/exp_scripts/sbatch_gin_ipa.sl

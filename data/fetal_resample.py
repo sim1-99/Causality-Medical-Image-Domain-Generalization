@@ -116,7 +116,7 @@ def copy_spacing_ori(src, dst):
     return dst
 
 
-OUT_FOLDER = "./processed/A/"
+OUT_FOLDER = "./processed/C/"
 HIST_CUT_TOP = 0.5
 
 

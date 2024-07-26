@@ -29,7 +29,7 @@ class GradlessGCReplayNonlinBlock3D(nn.Module):
 
         ker = torch.randn([self.out_channel * nb, self.in_channel , k, k, k  ], requires_grad = self.requires_grad  ).cuda()
         shift = torch.randn( [self.out_channel * nb, 1, 1, 1 ], requires_grad = self.requires_grad  ).cuda() * 1.0
-
+    
         x_in = x_in.view(1, nb * nc, nx, ny, nz)
         x_conv = F.conv3d(x_in, ker, stride =1, padding = k // 2, dilation = 1, groups = nb )
         x_conv = x_conv + shift
@@ -89,14 +89,50 @@ class GINGroupConv3D(nn.Module):
         return mixed
 
 ###### unit test #####
-'''
+
 if __name__ == '__main__':
     from pdb import set_trace
-    xin = torch.rand([5, 3, 64, 64, 32]).cuda()
-    augmenter = GINGroupConv3D().cuda()
-    out = augmenter(xin)
+    import sys
+    # caution: path[0] is reserved for script path (or '' in REPL)
+    sys.path.insert(1, '/home/schiarella/Causality-Medical-Image-Domain-Generalization/dataloaders')
+
+    from abd_dataset_utils import get_normalize_op
+    import niftiio as nio
+    import SimpleITK as sitk
+
+    img, _info = nio.read_nii_bysitk('/home/schiarella/Causality-Medical-Image-Domain-Generalization/processed/C/image_0.nii.gz', peel_info = True) # get the meta information out
+
+    img = np.float32(img)
+    #img = get_normalize_op(img)
+
+    #lb = nio.read_nii_bysitk('label_0.nii.gz')
+    #lb = np.float32(lb)
+
+    img     = np.transpose(img, (1,2,0))
+    #lb      = np.transpose(lb, (1,2,0))
+
+    #assert img.shape[-1] == lb.shape[-1]
+    nframe = img.shape[-1]
+
+    img = torch.from_numpy( img ).cuda()
+    #lb  = torch.from_numpy( lb ).cuda()
+    print(img.shape)
+    img = img.unsqueeze(0)
+    print(img.shape)
+    img = img.unsqueeze(0)
+    print(img.shape)
+
+    img= torch.cat((img, img, img), dim = 1)
+    print(img.shape)
+
+    augmenter = GINGroupConv3D(out_channel=3, n_layer=4, interm_channel=2, out_norm='frob').cuda()
+    out = augmenter(img)
     set_trace()
     print(out.shape)
 
+    itk_buffer = sitk.GetImageFromArray(out.cpu().numpy())
+    itk_buffer.SetSpacing(  _info["spacing"] )
+    itk_buffer.SetOrigin(   _info["origin"] )
+    itk_buffer.SetDirection(_info["direction"] )
 
-'''
+    sitk.WriteImage(itk_buffer, "/home/schiarella/Causality-Medical-Image-Domain-Generalization/output/img_0.nii", True)

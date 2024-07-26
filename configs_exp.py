@@ -29,10 +29,10 @@ def cfg():
     name = 'myexp'
     phase = 'train'
     get_features = False
-    batchSize = 20
-    fineSize = 256 #192
+    batchSize = 32  ###
+    fineSize = 128  ###
     gpu_ids = [0]
-    nThreads = 4
+    nThreads = 12  ###
     load_dir = './checkpoints'
     checkpoints_dir = './checkpoints'
     reload_model_fid = ''
@@ -47,11 +47,11 @@ def cfg():
     validation_freq = 2000
     save_epoch_freq = 1000
     infer_epoch_freq = 250
-    save_prediction = False
+    save_prediction = True
 
     ###### training configs ######
     data_name = 'FETAL' # change to ABDOMINAL or PROSTATE
-    tr_domain = 'A' # for prostate, use A B C D E or F
+    tr_domain = 'B' # for prostate, use A B C D E or F
     te_domain = ''
     exclu_domain = None # only for prostate for 1vs5 experiments, will override te_domain
     model = 'efficient_b2_unet'
@@ -62,7 +62,7 @@ def cfg():
     epoch_count = 1
     which_epoch = 'latest'
     niter = 50
-    niter_decay = 1950 # epoches for lr decay.
+    niter_decay = 450 # epoches for lr decay.
 
     optimizer = 'adam'
     beta1 = 0.5
@@ -89,7 +89,7 @@ def cfg():
     gin_norm = 'frob'
 
     # config for ipa correlation maps
-    blend_grid_size = 64 # 24*2=48, 1/4 of image size
+    blend_grid_size = 16 # 24*2=48, 1/4 of image size
     blend_epsilon = 0.3
 
     # consistency
