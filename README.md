@@ -4,6 +4,13 @@ IEEE Transactions on Medical Imaging (IEEE-TMI)
 
 [Link to paper](https://ieeexplore.ieee.org/document/9961940)
 
+**What this fork does** by [S. Chiarella](https://github.com/sim1-99)
+
+I modified the code in order to get DA images with GIN and GIN-IPA. Data augmentation is just a step of the original segmentation algorithm, but it is carried out 2D in the original algorithm.
+My version of the code gives up the segmentation task, but implements GIN and GIN-IPA processing in 3D. It was tested with Python 3.7.
+
+Leave me a star :star: if this is useful to you!
+
 **News**
 
 We won the Fetal Tissue Annotation and Segmentation Challenge ([FeTA](https://feta.grand-challenge.org/Home/)) in MICCAI 2022, where this causality-inspired domain generalization serves as a key componnet to our solution. It significantly improves our model robustness against images from unforeseen insitutes.
