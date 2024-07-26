@@ -7,9 +7,11 @@ IEEE Transactions on Medical Imaging (IEEE-TMI)
 ## What this fork does
 I modified the code in order to get DA images with GIN and GIN-IPA. Data augmentation is just a step of the original segmentation algorithm, but it is carried out 2D in the original algorithm.
 
-My version of the code gives up the segmentation task, but implements GIN and GIN-IPA processing in 3D. It was tested in Python 3.7.
+My version of the code gives up the segmentation task, but implements GIN and GIN-IPA processing in 3D. It was tested in Python 3.7. Take a look at the wiki to learn more about how to use the algorithm and what is different from the original version.
 
-Leave me a :star: if this is useful to you! Acknowledgement: [Simone Chiarella](https://github.com/sim1-99)
+Leave me a :star: if this is useful to you!
+
+**Acknowledgement:** [Simone Chiarella](https://github.com/sim1-99)
 
 ---
 
