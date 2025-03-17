@@ -24,8 +24,8 @@ SAVE_PRED=False # save prediction results or not
 
 DATASET='FETAL'
 CHECKPOINTS_DIR="./my_exps/$DATASET"
-NITER=2  # 50 # no lr decay for the first 50 epoches
-NITER_DECAY=1  # 1950 # lr decay to zero even if we are using adam
+NITER=50 # no lr decay for the first 50 epoches
+NITER_DECAY=0  # 1950 # lr decay to zero even if we are using adam
 IMG_SIZE=256  # 192
 
 OPTM_TYPE='adam'
@@ -34,10 +34,10 @@ ADAM_L2=0.00003
 TE_DOMAIN="" # will be override by exclu_domain
 
 # blender config
-BLEND_GRID_SIZE=32 # 24 * 2 = 48, 1/4 of 192
+BLEND_GRID_SIZE=64 # 24 * 2 = 48, 1/4 of 192
 
 # validation fold
-ALL_TRS=("C") # repeat the experiment for different source domains. For the full set of experiments, use A B C D E F
+ALL_TRS=("A") # repeat the experiment for different source domains. For the full set of experiments, use A B C D E F
 NCLASS=8
 
 # KL term

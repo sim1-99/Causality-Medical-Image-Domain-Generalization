@@ -16,7 +16,7 @@ from .abd_dataset_utils import get_normalize_op
 from pdb import set_trace
 
 hostname = platform.node()
-BASEDIR = '/home/schiarella/Causality-Medical-Image-Domain-Generalization/processed/'
+BASEDIR = '/home/schiarella/Causality-Medical-Image-Domain-Generalization/FeTA_24_GIN-IPA/'
 print(f'Running on machine {hostname}, using dataset from {BASEDIR}')
 
 LABEL_NAME = ["BG", "CSF", "GM", "WM", "LV", "CBM", "SGM", "BS"]
@@ -221,7 +221,7 @@ def get_training(modality, idx_pct = [1.0, 0., 0.], tile_z_dim = 3):
         extern_norm_fn = None,
         tile_z_dim = tile_z_dim)
 
-def get_validation(modality, idx_pct = [1.0, 0., 0.], tile_z_dim = 3):
+def get_validation(modality, idx_pct = [0., 0., 0.], tile_z_dim = 3):
      return FetalDataset(idx_pct = idx_pct,\
         mode = 'val',\
         transforms = None,\
@@ -230,7 +230,7 @@ def get_validation(modality, idx_pct = [1.0, 0., 0.], tile_z_dim = 3):
         extern_norm_fn = None,\
         tile_z_dim = tile_z_dim)
 
-def get_test(modality, tile_z_dim = 3, idx_pct = [1.0, 0., 0.]):
+def get_test(modality, tile_z_dim = 3, idx_pct = [0., 0., 0.]):
      return FetalDataset(idx_pct = idx_pct,\
         mode = 'test',\
         transforms = None,\
@@ -239,7 +239,7 @@ def get_test(modality, tile_z_dim = 3, idx_pct = [1.0, 0., 0.]):
         base_dir = BASEDIR,\
         tile_z_dim = tile_z_dim)
 
-def get_test_all(modality, norm_func, tile_z_dim = 3, idx_pct = [1.0, 0., 0.]):
+def get_test_all(modality, norm_func, tile_z_dim = 3, idx_pct = [0., 0., 0.]):
      return FetalDataset(idx_pct = idx_pct,\
         mode = 'test_all',\
         transforms = None,\
@@ -248,7 +248,7 @@ def get_test_all(modality, norm_func, tile_z_dim = 3, idx_pct = [1.0, 0., 0.]):
         base_dir = BASEDIR,\
         tile_z_dim = tile_z_dim)
 
-def get_test_exclu(tr_modality, tile_z_dim = 3, idx_pct = [1.0, 0., 0.]):
+def get_test_exclu(tr_modality, tile_z_dim = 3, idx_pct = [0., 0., 0.]):
     modality = [ md for md in ['C'] if md != tr_modality ]  # 'A', 'B', 'C', 'D', 'E', 'F'
     return FetalDataset(idx_pct = idx_pct,\
         mode = 'test_all',\

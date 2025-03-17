@@ -164,7 +164,7 @@ cython_debug/
 *.out
 *.err
 checkpoints/
-FeTA_24_GIN-IPA/
+images/
 processed/
 output_gin/
 output_ginipa/

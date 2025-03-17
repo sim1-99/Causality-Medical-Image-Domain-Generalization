@@ -38,9 +38,9 @@ class AdvBias(AdvTransformBase):
     """
     def __init__(self,
                  config_dict={
-                'epsilon':0.3,
+                 'epsilon':0.3,
                  'xi':1e-6,
-                 'control_point_spacing':[32,32],
+                 'control_point_spacing':[64,64],
                  'downscale':2,
                  'data_size':[1,1,256,256,256],
                  'interpolation_order':3,
@@ -111,6 +111,7 @@ class AdvBias(AdvTransformBase):
         Args co1818:
             upd_direction: direction of update. GA for gradient ascend in original implmentation. GD for descent, added by co1818
         '''
+        self.debug = True
         if self.debug: print ('optimize bias')
         grad = self.unit_normalize(self.param.grad,p_type ='l2')
         if power_iteration:
@@ -266,6 +267,7 @@ https://github.com/airlab-unibas/airlab/blob/1a715766e17c812803624d95196092291fa
         generate bias field given the cppints N*1*k*l
         :return: bias field bs*1*H*W
         '''
+        self.debug = True
         if interpolation_kernel is None:
             interpolation_kernel=self.interp_kernel
         if padding is None:
@@ -285,12 +287,12 @@ https://github.com/airlab-unibas/airlab/blob/1a715766e17c812803624d95196092291fa
         ## recover bias field to original image resolution for efficiency.
         if self.debug: print ('after intep, size:',bias_field_tmp.size())
         scale_factor = self._image_size[0] / bias_field_tmp.size(2)
-        if scale_factor>1:
-            upsampler = torch.nn.Upsample(scale_factor=scale_factor, mode='bilinear',
-                                            align_corners=True)
-            diff_bias = upsampler(bias_field_tmp)
-        else:
-            diff_bias=bias_field_tmp
+        #if scale_factor>1:
+        upsampler = torch.nn.Upsample(scale_factor=scale_factor, mode='bilinear',
+                                        align_corners=True)
+        diff_bias = upsampler(bias_field_tmp)
+        #else:
+        #    diff_bias=bias_field_tmp
 
         bias_field = torch.exp(diff_bias)
 
@@ -340,7 +342,7 @@ if __name__ == "__main__":
     from utils import check_dir
     log_dir = "./result/log/debug/"
     check_dir(log_dir, create=True)
-    images = torch.ones(2,1,128,128).cuda()
+    images = torch.ones(1,1,256,256).cuda()
     images[:,:,::2,::2]=2.0
     images[:,:,::3,::3]=3.0
     images[:,:,::1,::1]=1.0

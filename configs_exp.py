@@ -30,7 +30,7 @@ def cfg():
     phase = 'train'
     get_features = False
     batchSize = 32  ###
-    fineSize = 128  ###
+    fineSize = 256  ###
     gpu_ids = [0]
     nThreads = 12  ###
     load_dir = './checkpoints'
@@ -89,7 +89,7 @@ def cfg():
     gin_norm = 'frob'
 
     # config for ipa correlation maps
-    blend_grid_size = 16 # 24*2=48, 1/4 of image size
+    blend_grid_size = 32 # 24*2=48, 1/4 of image size
     blend_epsilon = 0.3
 
     # consistency

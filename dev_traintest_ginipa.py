@@ -145,16 +145,17 @@ def main(_run, _config, _log):
     tb_writer = SummaryWriter( tbfile_dir  )
 
     opt = AttrDict(_config)
-    
+
     if opt.data_name == 'FETAL':
         import dataloaders.FetalDataset as FETA
         train_set       = FETA.get_training(modality = opt.tr_domain )
-        val_source_set  = FETA.get_validation(modality = opt.tr_domain)
+        """val_source_set  = FETA.get_validation(modality = opt.tr_domain)
         if opt.exclu_domain is not None:
             test_set        = FETA.get_test_exclu(tr_modality = opt.tr_domain)
         else:
             test_set        = FETA.get_test(modality = opt.te_domain)
         test_source_set     = FETA.get_test(modality = opt.tr_domain)
+        """
         label_name      = FETA.LABEL_NAME
 
     elif opt.data_name == 'ABDOMINAL':
@@ -191,7 +192,7 @@ def main(_run, _config, _log):
 
     train_loader = DataLoader(
         dataset = train_set, num_workers = opt.nThreads, 
-        batch_size = opt.batchSize, shuffle = True, drop_last = True,
+        batch_size = opt.batchSize, shuffle = False, drop_last = True,
         worker_init_fn = worker_init_fn, pin_memory = True
     )
     """
@@ -227,7 +228,7 @@ def main(_run, _config, _log):
         epoch_start_time = time.time()
         iter_data_time = time.time()
         epoch_iter = 0
-        np.random.seed()
+        np.random.seed(9)
         if opt.phase == 'train':
             for i, train_batch in tqdm(enumerate(train_loader), total = train_loader.dataset.size // opt.batchSize - 1):
 
@@ -244,7 +245,7 @@ def main(_run, _config, _log):
                 train_input = {'img': train_batch["img"],
                                'lb': train_batch["lb"]}"""
 
-                folder = f"/home/schiarella/Causality-Medical-Image-Domain-Generalization/processed/{opt.tr_domain}"
+                folder = f"/home/schiarella/Causality-Medical-Image-Domain-Generalization/FeTA_24_GIN-IPA/{opt.tr_domain}"
 
                 image_file = os.path.join(folder, f'image_{i}.nii.gz') # sorted(glob.glob(
                 label_file = os.path.join(folder, f'label_{i}.nii.gz')
@@ -273,7 +274,7 @@ def main(_run, _config, _log):
                 #model.optimize_parameters()
 
                 ## display training losses
-                if total_steps % opt.display_freq == 0:
+                """if total_steps % opt.display_freq == 0:
                     tr_viz = model.get_current_visuals_tr()
                     model.plot_image_in_tb(tb_writer, tr_viz)
 
@@ -282,7 +283,6 @@ def main(_run, _config, _log):
                     t = (time.time() - iter_start_time) / opt.batchSize
                     model.track_scalar_in_tb(tb_writer, tr_error, total_steps)
 
-                """
                 ## run and display validation losses
                 if total_steps % opt.validation_freq == 0:
                     with torch.no_grad():
