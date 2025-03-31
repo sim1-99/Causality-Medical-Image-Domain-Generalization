@@ -7,7 +7,7 @@ IEEE Transactions on Medical Imaging (IEEE-TMI)
 ## What this fork does
 I modified the code in order to get DA images with GIN and GIN-IPA. Data augmentation is just a step of the original segmentation algorithm, but it is carried out 2D in the original algorithm.
 
-I added a script `ginipa.py` that generates and saves the GIN-IPA transformed images.
+I added a script `ginipa.py` that generates and saves the GIN-IPA 3D transformed images.
 
 **Acknowledgement:** [Simone Chiarella](https://github.com/sim1-99)
 
