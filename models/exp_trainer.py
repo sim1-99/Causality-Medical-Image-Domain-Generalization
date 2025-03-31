@@ -369,9 +369,16 @@ def to01(x, by_channel = False):
     if not by_channel:
         out = (x - x.min()) / (x.max() - x.min())
     else:
-        nb, nc, nh, nw = x.shape
-        xmin = x.view(nb, nc, -1).min(dim = -1)[0].unsqueeze(-1).unsqueeze(-1).repeat(1,1,nh, nw)
-        xmax = x.view(nb, nc, -1).max(dim = -1)[0].unsqueeze(-1).unsqueeze(-1).repeat(1,1,nh, nw)
+        nb, nc, nh, nw, nd = x.shape
+        xmin = x.view(
+            nb, nc, -1
+        ).min(dim=-1)[0].unsqueeze(-1).unsqueeze(-1).unsqueeze(-1).repeat(
+            1, 1, nh, nw, nd)
+        xmax = x.view(
+            nb, nc, -1
+        ).max(dim=-1)[0].unsqueeze(-1).unsqueeze(-1).unsqueeze(-1).repeat(
+            1, 1, nh, nw, nd)
+        print(x.shape, xmax.shape)
         out = (x - xmin + 1e-5) / (xmax - xmin + 1e-5)
-    return out
+    return out[:, 0, ...]
 
