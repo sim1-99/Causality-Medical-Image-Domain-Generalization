@@ -47,7 +47,26 @@ def rescale_intensity04(data,new_min=0,new_max=1,eps=1e-20):
     return new_data
 
 
+def rescale_intensity_3D(data, new_min = 0, new_max = 1, eps = 1e-20):
+    '''
+    rescale pytorch batch data
+    :param data: N*1*H*W*D
+    :return: data with intensity ranging from 0 to 1
+    '''
+    bs, c, h, w, d = \
+        data.size(0), data.size(1), data.size(2), data.size(3), data.size(4)
+    data = data.reshape(bs*c, -1)
+    # pytorch 1.3
+    old_max = torch.max(data, dim=1, keepdim=True).values
+    old_min = torch.min(data, dim=1, keepdim=True).values
 
+    # co1818: in adjust to pytorch 0.4 for wtbenv
+    #old_max = torch.max(data, dim=1, keepdim=True)[0]
+    #old_min = torch.min(data, dim=1, keepdim=True)[0]
+
+    new_data = (data - old_min+eps) / (old_max - old_min + eps)*(new_max-new_min)+new_min
+    new_data = new_data.view(bs, c, h, w, d)
+    return new_data
 
 
 def check_dir(dir_path, create=False):

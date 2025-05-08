@@ -17,7 +17,7 @@ class AdvTransformBase(torch.nn.Module):
 
                  },
 
-                 use_gpu:bool = True, debug: bool = False):
+                 use_gpu:bool = True, debug: bool = True):
         '''
 
 
@@ -119,7 +119,8 @@ class AdvTransformBase(torch.nn.Module):
         if p_type=='l2':
             d_abs_max = torch.max(
             torch.abs(d.view(d.size(0), -1)), 1, keepdim=True)[0].view(
-            d.size(0), 1, 1, 1)
+            d.size(0), 1, 1, 1) #2D
+            #d.size(0), 1, 1, 1, 1) #3D
             # print(d_abs_max.size())
             d /= (1e-20 + d_abs_max) ## d' =d/d_max
             d /= torch.sqrt(1e-6 + torch.sum(
