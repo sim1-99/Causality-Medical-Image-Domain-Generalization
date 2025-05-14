@@ -35,11 +35,10 @@ blender_cofig = {  # bias field interpolation config for IPA
     'space': 'log',
 }
 
-HIST_CUT_TOP = 0.5
 files = sorted(os.listdir(input_folder))
 
 for i, file in enumerate(files):
-    if i >= 2 and i < 4:
+    if i < 10:
         img, info = nio.read_nii_bysitk(
             os.path.join(input_folder, file), peel_info=True
         )
@@ -48,8 +47,6 @@ for i, file in enumerate(files):
         mean = np.mean(img)
         std = np.std(img)
         img = (img - mean) / std
-        hir = float(np.percentile(img, 100.0 - HIST_CUT_TOP))
-        img[img > hir] = hir
         img = torch.from_numpy(img).cuda()
         img = img.unsqueeze(0).unsqueeze(0)
         img = torch.cat((img, img, img), dim=1)
@@ -64,12 +61,16 @@ for i, file in enumerate(files):
 
         gin = torch.cat([augmenter(img) for _ in range(3)], dim=0)
 
-        blender_node = AdvBias(blender_cofig, debug=True)  # AdvBias
+        blender_node = AdvBias(blender_cofig, debug=True)
         blender_node.init_parameters()
-        blend_mask = rescale_intensity(blender_node.bias_field
-            ).repeat(1, 3, 1, 1, 1)
+        blend_mask_1 = rescale_intensity(blender_node.bias_field)
+        blend_mask_2 = blend_mask_1.clone().detach().reshape(1, 1, 256, 1, 256)
+        blend_mask_2 = blend_mask_2.repeat(1, 1, 1, 256, 1)
+        blend_mask_3 = blend_mask_1.clone().detach().reshape(1, 1, 256, 256, 1)
+        blend_mask_3 = blend_mask_3.repeat(1, 1, 1, 1, 256)
+        blend_mask_1 = blend_mask_1.repeat(1, 1, 256, 1, 1)
 
-        dir = random.randint(0, 2)
+        """dir = random.randint(0, 2)
         if dir == 0:
             perm = (0, 1, 2, 3, 4)
         elif dir == 1:
@@ -78,23 +79,27 @@ for i, file in enumerate(files):
             perm = (0, 1, 3, 4, 2)
         
         blend_mask = blend_mask.permute(perm)
+        """
 
         print('bias field', blender_node.bias_field.shape)
-        print('blend mask', blend_mask.shape)
+        blend_volume = (blend_mask_1 + blend_mask_2 + blend_mask_3)/3.
+        blend_volume = rescale_intensity_3D(blend_volume.repeat(1, 3, 1, 1, 1))
 
-        """input_cp1 = gin[:1].clone().detach() * (1.0 - blend_mask) + gin[1:2].clone().detach() * blend_mask
-        input_cp2 = gin[:1] * blend_mask + gin[1:2] * (1.0 - blend_mask)
+        print('blend mask 1', blend_mask_1.shape)
+        print('blend mask 2', blend_mask_2.shape)
+        print('blend mask 3', blend_mask_3.shape)
+        print('blend volume', blend_volume.shape)
+
+        input_cp1 = gin[:1].clone().detach() * (1.0 - blend_volume) + gin[1:2].clone().detach() * blend_volume
+        input_cp2 = gin[:1] * blend_volume + gin[1:2] * (1.0 - blend_volume)
 
         gin[:1] = input_cp1
         gin[1:2] = input_cp2
         input_img_3copy = gin
-
         ginipa = t2n(to01(input_img_3copy[:1], True))
-
         ginipa = nio.convert_to_sitk(ginipa[0], info)
         sitk.WriteImage(
             ginipa, f"{experiment_folder}/ginipa_{i}.nii.gz", True)  # ginipa_{j}-{i}.nii.gz
-        """
 
         """gin1_itk = gin1[0, 0, ...].cpu().numpy() # np.transpose(gin1[0, 0, ...].cpu().numpy(), (2, 0, 1))
         gin1_itk = nio.convert_to_sitk(gin1_itk, info)
@@ -105,14 +110,41 @@ for i, file in enumerate(files):
         sitk.WriteImage(gin2_itk, f"{experiment_folder}/gin2_{j}-{i}.nii.gz", True)
         """
 
-        blend_mask_itk = sitk.GetImageFromArray(
-            blend_mask[0, 0, ...].cpu().numpy()
+        blend_mask_1_itk = sitk.GetImageFromArray(
+            blend_mask_1[0, 0, ...].cpu().numpy()
         )
-        blend_mask_itk.SetOrigin(info['origin'])
-        blend_mask_itk.SetDirection(info['direction'])
-        blend_mask_itk.SetSpacing(info['spacing'])
+        blend_mask_1_itk.SetOrigin(info['origin'])
+        blend_mask_1_itk.SetDirection(info['direction'])
+        blend_mask_1_itk.SetSpacing(info['spacing'])
         sitk.WriteImage(
-            blend_mask_itk, f"{experiment_folder}/blend_mask_{i}.nii.gz", True
+            blend_mask_1_itk, f"{experiment_folder}/blend_mask_1_{i}.nii.gz", True
+        )
+        blend_mask_2_itk = sitk.GetImageFromArray(
+            blend_mask_2[0, 0, ...].cpu().numpy()
+        )
+        blend_mask_2_itk.SetOrigin(info['origin'])
+        blend_mask_2_itk.SetDirection(info['direction'])
+        blend_mask_2_itk.SetSpacing(info['spacing'])
+        sitk.WriteImage(
+            blend_mask_2_itk, f"{experiment_folder}/blend_mask_2_{i}.nii.gz", True
+        )
+        blend_mask_3_itk = sitk.GetImageFromArray(
+            blend_mask_3[0, 0, ...].cpu().numpy()
+        )
+        blend_mask_3_itk.SetOrigin(info['origin'])
+        blend_mask_3_itk.SetDirection(info['direction'])
+        blend_mask_3_itk.SetSpacing(info['spacing'])
+        sitk.WriteImage(
+            blend_mask_3_itk, f"{experiment_folder}/blend_mask_3_{i}.nii.gz", True
+        )
+        blend_volume_itk = sitk.GetImageFromArray(
+            blend_volume[0, 0, ...].cpu().numpy()
+        )
+        blend_volume_itk.SetOrigin(info['origin'])
+        blend_volume_itk.SetDirection(info['direction'])
+        blend_volume_itk.SetSpacing(info['spacing'])
+        sitk.WriteImage(
+            blend_volume_itk, f"{experiment_folder}/blend_volume_{i}.nii.gz", True
         )
 
 
